@@ -15,7 +15,8 @@ const toneSynthsArr = [
   new Tone.PolySynth().toDestination()
 ]
 
-const Square = ({ value, onClick }) => {
+const Square = ({ coords, value, onClick }) => {
+  const { x, y } = coords
   const active = value === 1
   const styles = {
     display: 'flex',
@@ -27,13 +28,25 @@ const Square = ({ value, onClick }) => {
     border: active ? '1px solid #999' : '1px solid #eee'
   }
   return (
-    <div style={styles} onClick={onClick}>{value}</div>
+    <div className={`col${x}`} style={styles} onClick={onClick}>{value}</div>
   )
 }
 
 const Sequencer = ({ isPlaying, scale, measures, subDivision, pattern, setUserPattern }) => {
   // TEST TEST TEST
   const [toneSequence, setToneSequence] = useState()
+
+  const getSequenceColumns = () => {
+    // Get number of columns
+    const numColumns = document.getElementById('gridRow1').children.length
+    // Generate arrays of column elements
+    const columns = []
+    for (let i = 0; i < numColumns; i++) {
+      const columnElementsArr = Array.from(document.getElementsByClassName(`col${i}`))
+      columns.push(columnElementsArr)
+    }
+    return columns
+  }
   
   const loopUserSequence = () => {
     const sequences = []
@@ -44,11 +57,21 @@ const Sequencer = ({ isPlaying, scale, measures, subDivision, pattern, setUserPa
   }
 
   const newSequenceSynthCreator = (index, synth, sequence) => {
+    const columns = getSequenceColumns()
+
+    let count = 0
+    const subDivisionNum = parseInt(subDivision.match(/\d+/g))
+
     const tempSequence = sequence.map(isActive => {
       if (isActive) return scale[index]
       else return null
     })
     return new Tone.Sequence((time, note) => {
+      const activeColumns = columns[count % subDivisionNum]
+      activeColumns.forEach(column => column.style.backgroundColor = 'red')
+      Tone.Draw.schedule(() => {
+        activeColumns.forEach(column => column.style.backgroundColor = '')
+      }, time + Tone.Time('16n').toSeconds())
       synth.triggerAttackRelease(note, '16n', time)
     }, tempSequence, subDivision)
   }
@@ -74,6 +97,19 @@ const Sequencer = ({ isPlaying, scale, measures, subDivision, pattern, setUserPa
     if (toneSequence) toneSequence.forEach(synth => synth.start(0))
   }, [toneSequence])
 
+  // TEST TEST TEST
+  // Tone.Transport.schedule((time) => {
+    
+
+  //   Tone.Draw.schedule(() => {
+  //     // console.log(time)
+  //     // const col0 = Array.from(document.getElementsByClassName('col0'))
+  //     // col0.forEach(col => {
+  //     //   col.style.backgroundColor = 'red'
+  //     // })
+  //   }, time)
+  // })
+
   // Create an updated pattern based on user input and set the pattern state to it
   function updatePattern({ x, y, value }) {
     const patternCopy = [...pattern]
@@ -91,10 +127,10 @@ const Sequencer = ({ isPlaying, scale, measures, subDivision, pattern, setUserPa
         height: 50
       }
       return (
-        <div key={y} style={styles}>
+        <div key={y} style={styles} id={`gridRow${y + 1}`}>
           {
             row.map((value, x) => (
-              <Square key={x} value={value} onClick={() => updatePattern({ x, y, value })} />
+              <Square key={x} coords={{ x, y }} value={value} onClick={() => updatePattern({ x, y, value })} />
             ))
           }
         </div>
@@ -110,6 +146,7 @@ const Sequencer = ({ isPlaying, scale, measures, subDivision, pattern, setUserPa
 }
 
 Square.propTypes = {
+  coords: PropTypes.object.isRequired,
   value: PropTypes.number.isRequired,
   onClick: PropTypes.func.isRequired
 }
