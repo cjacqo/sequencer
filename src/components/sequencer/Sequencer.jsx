@@ -61,19 +61,21 @@ const Sequencer = ({ isPlaying, scale, measures, subDivision, pattern, setUserPa
 
     let count = 0
     const subDivisionNum = parseInt(subDivision.match(/\d+/g))
+    const tempSequence = sequence.map(isActive => isActive ? scale[index] : null)
 
-    const tempSequence = sequence.map(isActive => {
-      if (isActive) return scale[index]
-      else return null
-    })
     return new Tone.Sequence((time, note) => {
-      const activeColumns = columns[count % subDivisionNum]
-      activeColumns.forEach(column => column.style.backgroundColor = 'red')
-      Tone.Draw.schedule(() => {
-        activeColumns.forEach(column => column.style.backgroundColor = '')
-      }, time + Tone.Time('16n').toSeconds())
-      synth.triggerAttackRelease(note, '16n', time)
-    }, tempSequence, subDivision)
+      columns.forEach((columnElements, columnIndex) => {
+        const isActiveStep = columnIndex === (Tone.Transport.position.split(':')[1] % sequence.length)
+        columnElements.forEach(element => {
+          element.style.backgroundColor = isActiveStep ? 'red' : ''
+        })
+      })
+
+      if (note) {
+        synth.triggerAttackRelease(note, '16n', time)
+      }
+      
+    }, tempSequence, subDivision).start(0)
   }
 
   // When the isPlaying state is changed, either stop or start the sequencer
