@@ -129,10 +129,6 @@ const Sequencer = ({ isPlaying, scale, measures, subDivision, pattern, setUserPa
       Tone.Transport.cancel()
       loopUserSequence(newPattern)
     }
-    // const patternCopy = [...pattern]
-    // patternCopy[y][x] = +!value
-    // setUserPattern(patternCopy)
-    // handleSequence
   }
 
   const renderSequencer = () => {
