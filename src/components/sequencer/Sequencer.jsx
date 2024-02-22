@@ -112,9 +112,26 @@ const Sequencer = ({ isPlaying, scale, measures, subDivision, pattern, setUserPa
 
   // Create an updated pattern based on user input and set the pattern state to it
   function updatePattern({ x, y, value }) {
-    const patternCopy = [...pattern]
-    patternCopy[y][x] = +!value
-    setUserPattern(patternCopy)
+    const newPattern = pattern.map((row, rowIndex) => {
+      if (rowIndex === y) {
+        return row.map((cell, cellIndex) => {
+          if (cellIndex === x) {
+            return +!value
+          }
+          return cell
+        })
+      }
+      return row
+    })
+    setUserPattern(newPattern)
+
+    if (isPlaying) {
+      Tone.Transport.cancel()
+      loopUserSequence(newPattern)
+    }
+    // const patternCopy = [...pattern]
+    // patternCopy[y][x] = +!value
+    // setUserPattern(patternCopy)
     // handleSequence
   }
 
